@@ -1,0 +1,9 @@
+
++ use ...
+
+  make docker 
+
+  ... to build report because need to work in Docker containers
+  that have the MetaPost source builds in them
+
+

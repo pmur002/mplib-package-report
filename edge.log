@@ -1,0 +1,16 @@
+This is MetaPost, version 1.999 (TeX Live 2015/Debian) (kpathsea version 6.2.1)  30 OCT 2018 15:35
+**edge.mp
+(/usr/share/texlive/texmf-dist/metapost/base/mpost.mp
+(/usr/share/texlive/texmf-dist/metapost/base/plain.mp
+Preloading the plain mem file, version 1.005) ) (./edge.mp
+Path at line 2, before choices:
+(136.07996,257.04053){0,-4096}..tension atleast1
+ ..{0,-4096}(45.36035,196.5597)
+
+Path at line 2, after choices:
+(136.07996,257.04053)..controls (136.07996,210.28703) and (45.36035,243.31319)
+ ..(45.36035,196.5597)
+
+ [1] )
+1 output file written: edge.1
+

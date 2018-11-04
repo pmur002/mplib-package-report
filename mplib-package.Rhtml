@@ -1,0 +1,1013 @@
+<html>
+  <head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <style type="text/css">
+    @media print {
+      body { }
+      p.img { text-align: center; page-break-inside: avoid }
+      img.CC { display: inline }
+    }
+    @media screen {
+      body { max-width: 800px; margin: auto }
+      p.img { text-align: center }
+      img.CC { display: inline }
+    }
+    p.date {
+      font-size: smaller;
+      margin: 0;
+    }
+    p.versionHistory {
+      color: gray
+    }
+    p.versionHistory a {
+      color: gray
+    }
+    p.ref {
+      text-indent: -2em;
+      padding-left: 2em;
+    }
+  </style>
+    <!-- PDFjs code (more at the end of the document) -->
+    <script src="https://mozilla.github.io/pdf.js/build/pdf.js"></script>
+  </head>
+  <body>
+    <h1>MetaPost Three Ways</h1>
+    <p>
+      <span style="font-style: italic">by Paul Murrell</span>
+      <a href="http://orcid.org">
+        <img alt="" src="https://www.stat.auckland.ac.nz/~paul/ORCID/ORCiD.png" style="width: 16px; height: 16px; vertical-align: middle">
+      </a>
+      <span style="font-family: mono; font-size: small">
+        <a href="http://orcid.org/0000-0002-3224-8858">http://orcid.org/0000-0002-3224-8858</a>
+      </span>
+    </p>
+    <p class="date">
+    Version 1:
+<!--begin.rcode echo=FALSE, results="asis"
+cat(format(Sys.Date(), "%A %d %B %Y"))
+    end.rcode-->
+  </p>
+<!--begin.rcode init, echo=FALSE, message=FALSE, results="hide"
+opts_chunk$set(comment=" ", tidy=FALSE)
+options(width=100)
+## For wonky desktop set up
+options(bitmapType="cairo")
+  end.rcode-->
+<!--begin.rcode echo=FALSE
+    library(grid)
+  end.rcode-->
+    <hr>
+    <p><a rel="license" href="http://creativecommons.org/licenses/by/4.0/"><img class="CC" alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by/4.0/88x31.png"></a><br><span xmlns:dct="http://purl.org/dc/terms/" property="dct:title">This document</span>
+    by <span xmlns:cc="http://creativecommons.org/ns#" property="cc:attributionName">Paul
+    Murrell</span> is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by/4.0/">Creative
+    Commons Attribution 4.0 International License</a>.
+  </p>
+    <hr>
+    <p>
+    This report describes three different approaches to communicating
+    between R and MetaPost: importing the PostScript output from MetaPost;
+    calling the <code>mpost</code> program to solve MetaPost paths;
+    and calling the <code>mplib</code> library to solve MetaPost paths.
+  </p>
+    <div>
+      <h2>Table of Contents:</h2>
+      <ul style="list-style: none">
+        <li>
+          <a href="#intro">1. Introduction</a>
+        </li>
+        <li>
+          <a href="#paths">2. Describing MetaPost paths in R</a>
+        </li>
+        <li>
+          <a href="#grimport">3. Importing MetaPost PostScript output</a>
+        </li>
+        <li>
+          <a href="#metapost">4. Tracing MetaPost log output</a>
+        </li>
+        <li>
+          <a href="#mplib">5. Calling the MPLib library</a>
+        </li>
+        <li>
+          <a href="#integrate">6. Integrating R and MetaPost graphics</a>
+        </li>
+        <li>
+          <a href="#summary">7. Summary</a>
+        </li>
+        <li>
+          <a href="#discussion">8. discussion</a>
+        </li>
+        <li>
+          <a href="#requirements">9. Technical requirements</a>
+        </li>
+        <li>
+          <a href="#Resources">10. Resources</a>
+        </li>
+        <li>
+          <a href="#references">11. References</a>
+        </li>
+      </ul>
+    </div>
+    <h2>
+      <a name="intro">1. Introduction</a>
+    </h2>
+    <p>
+    MetaPost (<a href="#metapost-hobby">Hobby, 1998</a>) 
+    is a graphics system that provides some very useful 
+    features for describing curves.  For example, the 
+    following MetaPost code describes an infinity symbol 
+    from only four points:  the path will pass horizontally from left
+    to right through the first point (top-left), then the second point
+    (bottom-right), then curve around and pass horizontally
+    from right to left through the third point (top-right), then
+    the fourth point (bottom-left), and finally curve around back to 
+    the starting point.
+  </p>
+<!--begin.rcode echo=FALSE
+mpostcmd <- 'mpost -s outputformat="svg" -s outputtemplate="%j.svg" infinity.mp'
+system(mpostcmd)
+cat(readLines("infinity.mp"), sep="\n")
+  end.rcode-->
+    <p>
+    One way to use MetaPost is to write a standalone file 
+    containing MetaPost code (the code above is stored in a file
+    called <code>infinity.mp</code>).  This can then be processed 
+    using the <code>mpost</code> program to produce a PostScript, or PNG,
+    or SVG
+    file containing the drawn curve.  Typing the expression
+    below (in a shell)
+    produces an SVG file <code>infinity.svg</code>,
+    which is shown below the <code>mpost</code> command.
+  </p>
+<!--begin.rcode echo=FALSE
+cat(mpostcmd)
+  end.rcode-->
+    <img src="infinity.svg" style="border: solid 1pt; padding: 10pt">
+    <p>
+    The MetaPost system is often used in association with the TeX documents.
+    Another approach to using MetaPost is to include MetaPost code directly
+    within a LaTeX document, as shown in the following code.  
+  </p>
+<!--begin.rcode echo=FALSE
+lualatexcmd <- "lualatex infinity-doc.tex"
+system(lualatexcmd)
+cat(readLines("infinity-doc.tex"), sep="\n")
+  end.rcode-->
+    <p>
+    This LaTeX document must be processed with the <code>lualatex</code>
+    engine (<a href="#luatex">The LuaTeX development team, 2017</a>)
+    (rather than, for example, <code>pdflatex</code>), but this automatically
+    generates and embeds the MetaPost image in the resulting
+    PDF document  (the resulting
+    PDF document is shown below the code).
+  </p>
+<!--begin.rcode echo=FALSE
+cat(lualatexcmd)
+  end.rcode-->
+    <canvas id="infinity-doc" class="pdf" style="border: solid 1pt; padding: 10pt"></canvas>
+    <p>
+    The ConTeXt system (<a href="#context">Hagen, 2018</a>) 
+    also allows embedded MetaPost code.
+  </p>
+    <p>
+    This report considers the problem of integrating MetaPost 
+    with R (<a href="#R">R Core Team, 2018</a>).  More specifically, we will look at incorporating
+    MetaPost curves within R graphical output.
+    Although it is also possible to draw text labels within MetaPost images,
+    this work focuses mostly on the curve-drawing facilities of MetaPost.
+  </p>
+    <p>
+    This report will describe three different 
+    interfaces to MetaPost that are based on three R packages:
+    'grImport', 'metapost', and 'mplib'.
+  </p>
+<!--begin.rcode message=FALSE
+library(grImport)
+library(metapost)
+library(mplib)
+  end.rcode-->
+    <h2>
+      <a name="paths">2. Describing MetaPost paths in R</a>
+    </h2>
+    <p>
+    Our goal is to produce graphical
+    output in R, with assistance from MetaPost to produce curves.
+    The first step is to describe a MetaPost curve within R.
+  </p>
+    <p>
+    Rather than write MetaPost code directly, the 'metapost'
+    package provides functions that allow us to construct a 
+    MetaPost path in R code.  For example, the following code
+    describes the infinity symbol path that we saw earlier.
+  </p>
+<!--begin.rcode 
+p <- knot(0, 0) + dir(0) + knot(20, 10) + dir(0) + 
+     knot(20, 0) + dir(180) + knot(0, 10) + dir(180) +
+     cycle()
+  end.rcode-->
+    <p>
+    The result is a "path" object, which prints out a MetaPost
+    equivalent ...
+  </p>
+<!--begin.rcode 
+p
+  end.rcode-->
+    <p>
+    ... and can be used to draw the infinity symbol in R.
+  </p>
+<!--begin.rcode grid.metaplot, eval=FALSE
+grid.metapost(p)
+  end.rcode-->
+<!--begin.rcode echo=FALSE, fig.width=1, fig.height=.5
+mp <- metapost(p, "grid.mp")
+mpost("grid.mp", template="%j.ps")
+vp <- mpvp("grid.ps")
+pushViewport(vp)
+<<grid.metaplot>>
+  end.rcode-->
+    <p>
+    The basic structure of any path is a set of knot locations,
+    which are defined using the <code>knot</code> function.
+    Additional information can be provided in the call to 
+    <code>knot</code>. For example, we can specify the
+    (right) direction of the knot as shown below.
+  </p>
+<!--begin.rcode 
+knot(0, 0, dir.right=0)
+  end.rcode-->
+    <p>
+    In addition to direction, it is possible to specify 
+    tension, curl, and explicit control points (both left and right)
+    in the call to <code>knot</code>.  However, it may be more readable
+    to use the separate "connector" 
+    functions that specify direction (<code>dir</code>),
+    tension (<code>tension</code>), curl (<code>curl</code>), and
+    control points (<code>cp</code>) and combine them all using the
+    <code>+</code> operator.  For example, the following two
+    expressions are equivalent.
+  </p>
+<!--begin.rcode 
+knot(0, 0, dir.right=0) + knot(1, 1, dir.left=0)
+knot(0, 0) + dir(0) + dir(0) + knot(1, 1)
+  end.rcode-->
+    <p>
+    There is also the function <code>cycle</code> to indicate that
+    the path is a closed path (this was used in the infinity symbol above.
+  </p>
+    <p>
+    In addition to the <code>+</code> operator for combining knots,
+    there are <code>-</code>, <code>%+%</code>, and <code>%-%</code> operators.
+    These correspond to the <code>--</code> (straight line), 
+    <code>...</code> (inflection-free path), and
+    <code>---</code> (straight line with smooth connection) 
+    operators in MetaPost.
+    These operators may only be used between two knots (not between a 
+    call to <code>knot</code>
+    and a call to one of the connector functions like <code>dir</code>).
+  </p>
+    <p>
+    The locations of knots (and control points) can be specified
+    using any coordinate system from the 'grid' package, either
+    via the <code>unit</code> function, or the <code>units</code> 
+    argument to <code>knot</code>, or by setting the 
+    <code>metapost.units</code> option.
+    For example, the following expressions are all equivalent.
+  </p>
+<!--begin.rcode 
+options(metapost.units="npc")
+knot(1, 1)
+knot(1, 1, "npc")
+knot(unit(1, "npc"), unit(1, "npc"))
+options(metapost.units="pt")
+  end.rcode-->
+    <p>
+    The benefit of the more verbose forms is finer control.  For example,
+    with the last form,
+    it is possible to specify the x-location of a knot relative to
+    a different coordinate system than the y-location of the knot.
+  </p>
+<!--begin.rcode 
+knot(unit(1, "npc"), unit(1, "in"))
+  end.rcode-->
+    <h2>
+      <a name="grimport">3. Importing MetaPost PostScript output</a>
+    </h2>
+    <p>
+    Having defined a MetaPost path in R, the next step 
+    is to draw the path.  One way to do this is to use
+    the <code>mpost</code> program to draw the curve as a PostScript
+    image and then import the PostScript image with the 'grImport' package.
+    The 'metapost' package provides two functions to help with this
+    approach.  
+  </p>
+    <p>
+    The <code>metapost</code> function can be used to
+    convert the MetaPost path in R into a MetaPost file.
+  </p>
+<!--begin.rcode 
+options(metapost.units="in")
+scurve <- knot(0, 0) + dir(0) + dir(0) + knot(1, 1)
+scurve
+mpcode <- metapost(scurve, "scurve.mp")
+  end.rcode-->
+    <p> 
+    The result returned by <code>metapost</code> is a character version
+    of the MetaPost code that it wrote to the MetaPost file.
+  </p>
+<!--begin.rcode 
+cat(mpcode, sep="\n")
+  end.rcode-->
+    <p>
+    The <code>mpost</code> function can be used to run the <code>mpost</code>
+    program on a file.
+  </p>
+<!--begin.rcode 
+mpost("scurve.mp")
+  end.rcode-->
+    <p>
+This produces a PostScript file <code>"scurve.1"</code>, which we can import and
+draw using 'grImport'.
+  </p>
+<!--begin.rcode 
+library(grImport)
+  end.rcode-->
+<!--begin.rcode fig.width=1.1, fig.height=1.1
+PostScriptTrace("scurve.1", "scurve.xml")
+scurvePic <- readPicture("scurve.xml")
+grid.picture(scurvePic)
+  end.rcode-->
+    <h2>
+      <a name="metapost">4. Tracing MetaPost log output</a>
+    </h2>
+    <p>
+    In the previous section, we had <code>mpost</code> both
+    <em>solve</em> and <em>draw</em> a MetaPost path 
+    and then we imported the drawing.  
+    Another option is to use <code>mpost</code> just to <em>solve</em>
+    the path, but to do the drawing in R.
+    This is the purpose of the <code>mptrace</code> function
+    (from the 'metapost' package).  
+  </p>
+    <p>
+    The <code>mptrace</code> function works 
+    with the output from a "log" file that is produced by <code>mpost</code>.
+    When we call the <code>mpost</code> function with <code>tracing=TRUE</code>
+    (the default), <code>mpost</code> produces a PostScript file
+    (<code>"scurve.1"</code> in the example above) and a log file
+    (<code>"scurve.log"</code> in the example above).  The log file
+    contains information about the Bezier curves that MetaPost has
+    chosen in order to represent the MetaPost path.
+    The <code>mptrace</code> function reads that log information into
+    R.  Note that the locations of the control points for the Bezier
+    curves are given in "big points" (or "printer's points"), which
+    are 1/72 inches.
+  </p>
+<!--begin.rcode 
+scurveTraced <- mptrace("scurve.log")
+scurveTraced
+  end.rcode-->
+    <p>
+    The <code>grid.metapost</code> function (from the 'metapost' package)
+    can take that path information and draw the appropriate Bezier curve.
+  </p>
+<!--begin.rcode fig.width=1.1, fig.height=1.1
+grid.metapost(scurveTraced)
+  end.rcode-->
+    <p>
+    The <code>grid.metapost</code> function will also accept a
+    MetaPost path directly, 
+    in which case it performs all of the necessary steps,
+    calling <code>metapost</code> to create a MetaPost file,
+    calling <code>mpost</code> to produce log output, 
+    calling <code>mptrace</code> to read the log output, and
+    then drawing the final result.
+  </p>
+<!--begin.rcode fig.width=1.1, fig.height=1.1
+grid.metapost(scurve)
+  end.rcode-->
+    <h3>Coordinate systems</h3>
+    <p>
+    A MetaPost path in R can be specified using any 'grid'
+    coordinate system, but the MetaPost code that the path
+    is converted into is described in terms of inches.
+    The 'grid' coordinate systems are always relative to the
+    current 'grid' viewport, so the meaning of a location
+    like <code>unit(1, "npc")</code>, in terms of inches,
+    depends on the current viewport.
+    In other words, the physical size of the MetaPost path is
+    fixed at the moment that it is converted to MetaPost code.
+  </p>
+    <p>
+    This should not cause any difficulty if we call
+    <code>grid.metapost</code> directly on a MetaPost path,
+    because the conversion to MetaPost code and the drawing of
+    the solved path will happen at once, in the same viewport.
+  </p>
+    <p>
+    However, if we call <code>metapost</code> (and <code>mpost</code>
+    and <code>mptrace</code>) ourselves, for example, so that we can
+    reuse the same path in multiple places, we need to be aware that
+    the physical size of the path will be fixed no matter where
+    we draw it.
+  </p>
+    <p>
+    The following code demonstrates this idea by drawing
+    a MetaPost path in two different viewports, one smaller and
+    one larger.  The (thin, opaque) black 
+    lines are drawn by calling <code>grid.metapost</code>
+    directly on the path, so they resize with the viewport.
+    The (thick, semitransparent)
+    red lines are drawn by calling <code>metapost</code>
+    within the first viewport and calling <code>grid.metapost</code>
+    on the solved path, so it remains at the smaller size in the larger
+    viewport.
+  </p>
+<!--begin.rcode fig.width=4, fig.height=2
+options(metapost.units="npc")
+p <- knot(0, 0) + dir(0) + dir(0) + knot(1, 1)
+pushViewport(viewport(0, 0, unit(1, "in"), unit(1, "in"),
+                      just=c("left", "bottom")))
+grid.rect(gp=gpar(col=NA, fill="grey80"))
+grid.metapost(p)
+metapost(p, "fixed.mp")
+mpost("fixed.mp")
+fixed <- mptrace("fixed.log")
+grid.metapost(fixed, gp=gpar(col=rgb(1,0,0,.5), lwd=3))
+popViewport()
+pushViewport(viewport(unit(1.5, "in"), 0,
+                      unit(2, "in"), unit(2, "in"),
+                      just=c("left", "bottom")))
+grid.rect(gp=gpar(col=NA, fill="grey80"))
+grid.metapost(p)
+grid.metapost(fixed, gp=gpar(col=rgb(1,0,0,.5), lwd=3))
+popViewport()
+  end.rcode-->
+    <h3>Accuracy</h3>
+    <p>
+    When knot locations in 'grid' coordinates are converted
+    to inches in MetaPost code, the values are rounded
+    (by default to 2 decimal places).
+    More decimal places can be retained via the <code>digits</code>
+    argument to <code>metapost</code> (or to <code>grid.metapost</code>
+    if we give it a path directly).
+  </p>
+<!--begin.rcode 
+p <- knot(0, 0) + dir(0) + dir(0) + knot(1, 1, "cm")
+cat(metapost(p), sep="\n")
+cat(metapost(p, digits=4), sep="\n")
+  end.rcode-->
+    <h2>
+      <a name="mplib">5. Calling the MPLib library</a>
+    </h2>
+    <p>
+    The approach described in the previous section
+    involves creating a MetaPost path in R,
+    writing a MetaPost file 
+    (with <code>metapost</code>), then generating a log file 
+    (with <code>mpost</code>), and finally
+    reading the log file back into R (with <code>mptrace</code>).
+  </p>
+    <p>
+    That approach involves both reading and writing to the file
+    system.  An alternative is provided by the 'mplib' package,
+    which provides an interface to the <code>mplib</code> MetaPost
+    library (<a href="#mplibapi">Hoekwater and Scarso, 2018</a>) and allows us to work entirely in resident 
+    memory.
+  </p>
+    <p>
+    The <code>mpsolve</code> function from the 'mplib' package
+    takes a MetaPost path and uses calls to <code>mplib</code> 
+    to solve the path.  The result is a set of Bezier curve control
+    points (similar to the <code>mptrace</code> function from
+    'metapost').
+  </p>
+<!--begin.rcode 
+library(mplib)
+  end.rcode-->
+<!--begin.rcode 
+scurveSolved <- mpsolve(scurve)
+scurveSolved
+  end.rcode-->
+    <p>
+    The <code>grid.mplib</code> function (from 'mplib') 
+    takes the solved path and draws the appropriate Bezier curves.
+  </p>
+<!--begin.rcode fig.width=1.1, fig.height=1.1
+grid.mplib(scurveSolved)
+  end.rcode-->
+    <p>
+    As with <code>grid.metapost</code>, <code>grid.mplib</code> will
+    also accept a MetaPost path directly (and calls
+    <code>mpsolve</code> itself).
+  </p>
+<!--begin.rcode fig.width=1.1, fig.height=1.1
+grid.mplib(scurve)
+  end.rcode-->
+    <p>
+    The value returned by <code>mpsolve</code> is compatible
+    with the value returned by <code>mptrace</code>, so it can
+    also be passed to <code>grid.metapost</code> for drawing.
+  </p>
+<!--begin.rcode fig.width=1.1, fig.height=1.1
+grid.metapost(scurveSolved)
+  end.rcode-->
+    <p>
+    The MetaPath description in R, which is described in terms
+    of 'grid' coordinates, is converted to "big points" (1/72 inches)
+    in the call to <code>mpsolve</code>.  This means that 
+    the physical size of the solved path is dependent on the 'grid' 
+    viewport in effect when <code>mpsolve</code> is called.
+  </p>
+    <h3>System requirements for 'mplib'</h3>
+    <p>
+    An important limitation of the 'mplib' package is that
+    it is built upon a shared library called <code>libmplib.so</code>
+    and, unfortunately, that library does not exist publicly.
+    However, steps to build the shared library are
+    given in <a href="#murrell-mplib-library-2018">Murrell, 2018a</a> and those
+    instructions are encoded in a 
+    <a href="MetaPost-shared/Dockerfile">Dockerfile</a> 
+    (which has been used to produce the Docker image 
+    <a href="https://hub.docker.com/r/pmur002/mplib-shared/">pmur002/mplib-shared</a>).
+  </p>
+    <h2>
+      <a name="integrate">6. Integrating R and MetaPost graphics</a>
+    </h2>
+    <p>
+    The point of being able to import MetaPost paths into R
+    is not just so that we can replicate a MetaPost image.
+    The value in being able to import MetaPost paths into R
+    is that this allows us to combine the strengths of MetaPost
+    graphics with the strengths of R graphics.
+  </p>
+    <p>
+    As a simple example, the following code makes use of a 
+    MetaPost path to connect a label with a data point
+    in a 'lattice' plot (<a href="#lattice"></a>).  MetaPost makes it easy to
+    describe the curve and R makes it easy to describe the plot.
+  </p>
+<!--begin.rcode 
+library(lattice)
+xyplot(mpg ~ disp, mtcars)
+x <- mtcars$disp[1]
+y <- mtcars$mpg[1]
+lab <- rownames(mtcars)[1]
+downViewport("plot_01.panel.1.1.vp")
+grid.picture(scurvePic, 
+             x=unit(x, "native"), y=unit(y, "native"),
+             width=unit(1, "in"), height=unit(1, "in"),
+             just=c("left", "bottom"), exp=0)
+grid.text(lab, 
+          unit(x, "native") + unit(1, "in"),
+          unit(y, "native") + unit(1, "in"),
+          just="left")
+  end.rcode-->
+    <p>
+    Another example of combining graphics facilities in R
+    with MetaPost is to use MetaPost to define a set of Bezier
+    control points for a path and then use the R package 'vwline'
+    (<a href="#pkg:vwline">Murrell, 2018c</a>)
+    to draw a variable-width version of that path.
+  </p>
+<!--begin.rcode 
+library(grid)    
+library(vwline)
+  end.rcode-->
+<!--begin.rcode fig.width=2, fig.height=2
+options(metapost.units="npc")
+p <- knot(0, 0) + dir(0) + dir(0) + knot(1, 1)
+metapost(p, "fig.mp")
+mpost("fig.mp", tracing=TRUE)
+controls <- mptrace("fig.log")[[1]]
+grid.offsetBezier(controls$x, controls$y, default.units="pt",
+                  w=widthSpline(unit(c(0, 5, 0), "mm"), shape=1))
+  end.rcode-->
+    <p>
+    The recent addition of the 'gridBezier' package 
+    (<a href="#pkg:gridbezier">Murrell, 2018b</a>)
+    means that this works for Bezier splines 
+    (consisting of more than one Bezier curve), such as the 
+    infinity symbol that we began with.
+  </p>
+<!--begin.rcode fig.width=2, fig.height=1.5
+options(metapost.units="mm")
+p <- knot(0, 0) + dir(0) + knot(20, 10) + dir(0) + 
+     knot(20, 0) + dir(180) + knot(0, 10) + dir(180) +
+     cycle()
+pushViewport(viewport(width=unit(1, "in"), height=unit(1, "in")))
+metapost(p, "fig.mp")
+mpost("fig.mp", tracing=TRUE)
+controls <- mptrace("fig.log")[[1]]
+grid.offsetBezier(controls$x, controls$y, default.units="pt",
+                  open=FALSE,
+                  w=unit(c(3, 1, 3), "mm"))
+  end.rcode-->
+    <p>
+    As a final example of mixing R graphics and MetaPost graphics,
+    the width of a variable-width Bezier spline in 'vwline' can itself be
+    described by a Bezier spline.  The following code
+    uses MetaPost to generate Bezier control points for the width
+    of the infinity symbol.  The diagram below the code
+    shows the Bezier spline that we have defined (the left edge
+    of the diagram represents the start of the infinity symbol
+    path and the right edge of the diagram represents the end
+    of the infinity symbol path;  the height of the black line
+    represents the width of the infinity symbol path).
+    <!--
+    NOTE the use of <code>dir(NA)</code> to place a non-specific
+    direction AFTER the second-to-last knot so that the subsequent
+    <code>dir(0)</code> becomes a direction for the last knot.
+    Another way to do that would be <code>knot(9, 2, dir.left=0)</code> (?)
+    -->
+  </p>
+<!--begin.rcode 
+options(metapost.units="mm")
+widthPath <- knot(0, 2) + dir(0) + dir(0) + knot(3, 2) + 
+             knot(6, 1) + dir(NA) + dir(0) + knot(9, 2)
+metapost(widthPath, "width.mp")
+mpost("width.mp", tracing=TRUE)
+widthControls <- mptrace("width.log")[[1]]
+w <- BezierWidth(unit(widthControls$y, "pt"),
+                 d=widthControls$x/max(widthControls$x))
+  end.rcode-->
+<!--begin.rcode echo=FALSE, fig.width=3, fig.height=1
+library(gridBezier)
+scale <- 3
+pushViewport(viewport(width=unit(max(scale*widthControls$x), "mm"), height=.8))
+grid.lines(0:1, 0, gp=gpar(col="grey"))
+grid.Bezier(scale*widthControls$x, scale*widthControls$y, default.unit="mm",
+            gp=gpar(lwd=2))
+  end.rcode-->
+    <p>
+    The code below applies that width spline to the infinity symbol.
+  </p>
+<!--begin.rcode fig.width=2, fig.height=1.5
+options(metapost.units="mm")
+pushViewport(viewport(width=unit(1, "in"), height=unit(1, "in")))
+metapost(p, "fig.mp")
+mpost("fig.mp", tracing=TRUE)
+controls <- mptrace("fig.log")[[1]]
+grid.offsetBezier(controls$x, controls$y, default.units="pt",
+                  open=FALSE,
+                  w=w)
+  end.rcode-->
+    <h2>
+      <a name="summary">7. Summary</a>
+    </h2>
+    <p>
+    The 'metapost' package provides functions (e.g., <code>knot</code>) 
+    for describing a MetaPost
+    path in R.  A MetaPost path description can be written to a MetaPost file
+    using the <code>metapost</code> function.  A MetaPost file can
+    be processed, to solve the path and produce PostScript output, 
+    using the <code>mpost</code> function.  A solved MetaPost path
+    (in the form of a log file produced by <code>mpost</code>) can be 
+    read into R using the <code>mptrace</code> function.  A solved
+    MetaPost path in R can be drawn using the <code>grid.metapost</code>
+    function.
+  </p>
+    <p>
+    Another way to generate a solved MetaPost path is using the 
+    <code>mpsolve</code> function from the  'mplib' package 
+    (although the 'mplib' package has complex system requirements).
+  </p>
+    <p>
+    Another way to draw a solved MetaPost path in R is to import
+    the PostScript output using the 'grImport' package.
+  </p>
+    <p>
+    (The line around the top of the diagram below, from
+    ".ps file" to <code>PostScriptTrace()</code>, was
+    described using <code>knot</code> and 
+    drawn using <code>grid.metapost</code>.)
+  </p>
+    <p>
+      <img src="diagram.svg">
+    </p>
+    <h2>
+      <a name="discussion">8. discussion</a>
+    </h2>
+    <p>
+    This report has described three main approaches to combining
+    MetaPost with R, based on three packages: 'grImport', 'metapost', 
+    and 'mplib'.  In this section, we discuss the reasons for 
+    bothering with an R interface to MetaPost, and the reasons
+    for bothering  with more than one approach.
+  </p>
+    <p>
+    The main value of having an R interface to MetaPost has been demonstrated
+    in the previous section:  we can combine the strengths of MetaPost's
+    path description language with the strengths of R graphics (for 
+    drawing plots).
+  </p>
+    <p>
+    One benefit of the R tools for generating MetaPost paths
+    (functions like <code>knot</code>) is that we can work more
+    comfortably in R, writing R code rather than character values that
+    contain MetaPost code.  It is also useful to have the general-purpose
+    programming language facilities of R to generate paths.  For example,
+    the following R code uses vectorisation to generate several paths
+    at once.  
+  </p>
+<!--begin.rcode fig.width=3, fig.height=1
+p <- knot(0, 0) + dir(45) + dir(0:9*-10) + knot(unit(6, "cm"), 0)
+grid.metapost(p)
+  end.rcode-->
+    <p>
+    This requires an explicit loop in MetaPost.
+  </p>
+    <pre>
+beginfig(7)
+for a=0 upto 9:
+draw (0,0){dir 45}..{dir -10a}(6cm,0);
+endfor
+endfig;
+  </pre>
+    <p>
+    One reason for having more than one interface between R and 
+    MetaPost is flexibility.
+    The design of the 'metapost' package (as shown in the diagram
+    from the previous section) allows for the functions to be used
+    in other ways than those described so far.
+    For example, the 'grImport' package can import
+    MetaPost output regardless of whether it was produced by 
+    functions from the 'metapost' package.  Similarly, the <code>mpost</code>
+    function can be used to run <code>mpost</code> on  a MetaPost file
+    regardless of whether that file was generated by <code>metapost</code>.
+    Finally, 
+    <code>mptrace</code> can be used to read information from a 
+    MetaPost log file regardless of whether the log file was produced 
+    by functions from 'metapost'.
+  </p>
+    <p>
+    The functions <code>mptrace</code> and <code>mpsolve</code> 
+    are also designed to produce values (Bezier control points)
+    that could be used by
+    functions other than <code>grid.metapost</code> or
+    <code>grid.mplib</code>.
+  </p>
+    <p>
+    Another reason for choosing one MetaPost approach over another is
+    the range of images that each approach supports.
+    Both the 'metapost' and 'mplib' packages are focused on 
+    just generating Bezier control points from a MetaPost path description.
+    This means that there are limits on the sort of MetaPost image
+    that can be described (there are limits on
+    the sort of path description that is possible with
+    functions like <code>knot</code>) and there are limits on
+    the sort of MetaPost image that can be read into R.
+    Further work could look at reducing these limits, though there will
+    remain limits on what is possible with the 'mplib' approach
+    because the MetaPost library API only exposes a subset of 
+    the MetaPost features.
+  </p>
+    <p>
+    The 'grImport' approach, by comparison, will handle any MetaPost
+    image, including images that contain text.
+  </p>
+    <p>
+    On the other hand, the path information that is returned by 
+    <code>mptrace</code> and <code>mpsolve</code> is easier
+    to work with and easier to combine with other graphical output
+    than an image that was imported with 'grImport'.
+    This is because the value returned by 
+    <code>mptrace</code> and <code>mpsolve</code> is just the location
+    of Bezier control points, whereas an imported image 
+    is a path that may be embedded within the context of a larger image
+    with other components.  This means that we may need to subset
+    the imported image and/or be required to transform coordinates 
+    to get the imported image to align with other graphical output.
+  </p>
+    <h2>
+      <a name="requirements">9. Technical requirements</a>
+    </h2>
+    <p>
+    The examples and discussion in this document relate to 
+    <a href="https://github.com/pmur002/metapost/releases/tag/v1.0-0">version
+    1.0-0</a> of the 'metapost' package, 
+    <a href="https://github.com/pmur002/mplib/releases/tag/v1.0-0">version
+    1.0-0</a> of the 'mplib' package, 
+    <a href="https://github.com/pmur002/vwline/releases/tag/v0.2-1">version
+    0.2-1</a> of the 'vwline' package, and
+    <a href="https://github.com/pmur002/gridbezier/releases/tag/v1.0-0">version
+    1.0-0</a> of the 'gridBezier' package.
+  </p>
+    <p>
+    Installing 'mplib' requires a Docker container pmur002/mplib
+    (the Docker container for
+    this report will also suffice)
+  </p>
+    <p>
+    This report was generated within a Docker container
+    (see <a href="#Resources">Resources</a> section below).
+  </p>
+    <h2>
+      <a name="Resources">10. Resources</a>
+    </h2>
+    <ul>
+      <li>
+      The <a href="mplib-package.cml">raw source file</a> for this
+      report, a <a href="mplib-package.xml">valid XML</a>
+      transformation of the source file, a <a href="mplib-package.Rhtml">'knitr' document</a> generated from
+      the XML file, 
+      two <a href="toc.R">R</a> <a href="bib.R">files</a> and
+      the <a href="mplib-package.bib">bibtex file</a>
+      that are used to generate the table of contents and reference sections,
+      two <a href="common.xsl">XSL</a> <a href="knitr.xsl">files</a> and an 
+      <a href="knit.R">R file</a> that are used to transform the XML to
+      the 'knitr' document, and a <a href="Makefile">Makefile</a> that
+      contains code for the other transformations and coordinates
+      everything.  
+      These materials are also available
+      on <a href="https://github.com/pmur002/mplib-package-report/releases/tag/v1">github</a>.
+    </li>
+      <li>
+      This report was generated within a 
+      <a href="https://www.docker.com/">Docker</a> container.
+      The Docker command to build the report is included in the Makefile above.
+      The Docker image for the container is available from
+      <a href="https://hub.docker.com/r/pmur002/mplib-package/">Docker Hub</a>;
+      alternatively, the image can be rebuilt from its 
+      <a href="Dockerfile">Dockerfile</a>.
+    </li>
+    </ul>
+    <h2>How to cite this document</h2>
+    <p>
+    Murrell, P. (2018). "MetaPost Three Ways" 
+    Technical Report 2018-??, Department of Statistics, The University of Auckland. 
+    [ <a href="how-to-cite.bib">bib</a> ] 
+  </p>
+    <h2>
+      <a name="references">11. References</a>
+    </h2>
+    <dl>
+<dt>
+[<a name="context">Hagen, 2018</a>]
+</dt>
+<dd>
+Hagen, H. (2018).
+ <em>ConTeXt The Manual</em>.
+[ <a href="mplib-package-bib_bib.html#context">bib</a> | 
+<a href="http://www.pragma-ade.com/general/manuals/cont-eni.pdf">.pdf</a> ]
+
+</dd>
+
+
+<dt>
+[<a name="metapost-hobby">Hobby, 1998</a>]
+</dt>
+<dd>
+Hobby, J. (1998).
+ A User's Manual for MetaPost.
+[ <a href="mplib-package-bib_bib.html#metapost-hobby">bib</a> ]
+
+</dd>
+
+
+<dt>
+[<a name="metapost">Hobby and the MetaPost development team, 2018</a>]
+</dt>
+<dd>
+Hobby, J. D. and the MetaPost development team (2018).
+ <em>METAPOST a user’s manual</em>.
+[ <a href="mplib-package-bib_bib.html#metapost">bib</a> | 
+<a href="http://www.tug.org/docs/metapost/mpman.pdf">.pdf</a> ]
+
+</dd>
+
+
+<dt>
+[<a name="Hoekwater:TB28-3-317">Hoekwater and Hagen, 2007</a>]
+</dt>
+<dd>
+Hoekwater, T. and Hagen, H. (2007).
+ MPlib: MetaPost as a reusable component.
+ <em>TUGboat</em>, 28(3):317--318.
+[ <a href="mplib-package-bib_bib.html#Hoekwater:TB28-3-317">bib</a> | 
+<a href="http://www.tug.org/TUGboat/tb28-3/tb90hoekwater-mplib.pdf">.pdf</a> ]
+
+</dd>
+
+
+<dt>
+[<a name="mplibapi">Hoekwater and Scarso, 2018</a>]
+</dt>
+<dd>
+Hoekwater, T. and Scarso, L. (2018).
+ <em>MPlib API documentation, version 2.00</em>.
+[ <a href="mplib-package-bib_bib.html#mplibapi">bib</a> | 
+<a href="http://mirror.aut.ac.nz/CTAN/systems/doc/metapost/mplibapi.pdf">.pdf</a> ]
+
+</dd>
+
+
+<dt>
+[<a name="murrell-mplib-library-2018">Murrell, 2018a</a>]
+</dt>
+<dd>
+Murrell, P. (2018a).
+ Building an mplib shared library.
+ Technical Report 2018-10, Department of Statistics, The University of
+  Auckland.
+ version 1.
+[ <a href="mplib-package-bib_bib.html#murrell-mplib-library-2018">bib</a> ]
+
+</dd>
+
+
+<dt>
+[<a name="pkg:gridbezier">Murrell, 2018b</a>]
+</dt>
+<dd>
+Murrell, P. (2018b).
+ <em>gridBezier: Bezier Curves in grid</em>.
+ R package version 1.0-0.
+[ <a href="mplib-package-bib_bib.html#pkg:gridbezier">bib</a> ]
+
+</dd>
+
+
+<dt>
+[<a name="pkg:vwline">Murrell, 2018c</a>]
+</dt>
+<dd>
+Murrell, P. (2018c).
+ <em>vwline: Draw variable-width lines</em>.
+ R package version 0.2-0.
+[ <a href="mplib-package-bib_bib.html#pkg:vwline">bib</a> ]
+
+</dd>
+
+
+<dt>
+[<a name="R">R Core Team, 2018</a>]
+</dt>
+<dd>
+R Core Team (2018).
+ <em>R: A Language and Environment for Statistical Computing</em>.
+ R Foundation for Statistical Computing, Vienna, Austria.
+[ <a href="mplib-package-bib_bib.html#R">bib</a> | 
+<a href="https://www.R-project.org/">http</a> ]
+
+</dd>
+
+
+<dt>
+[<a name="pkg:lattice">Sarkar, 2008</a>]
+</dt>
+<dd>
+Sarkar, D. (2008).
+ <em>Lattice: Multivariate Data Visualization with R</em>.
+ Springer, New York.
+ ISBN 978-0-387-75968-5.
+[ <a href="mplib-package-bib_bib.html#pkg:lattice">bib</a> | 
+<a href="http://lmdvr.r-forge.r-project.org">http</a> ]
+
+</dd>
+
+
+<dt>
+[<a name="luatex">The LuaTeX development team, 2017</a>]
+</dt>
+<dd>
+The LuaTeX development team (2017).
+ <em>LuaTeX Reference Manual</em>.
+[ <a href="mplib-package-bib_bib.html#luatex">bib</a> | 
+<a href="http://www.luatex.org/svn/trunk/manual/luatex.pdf">.pdf</a> ]
+
+</dd>
+</dl>
+    <hr>
+    <p><a rel="license" href="http://creativecommons.org/licenses/by/4.0/"><img class="CC" alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by/4.0/88x31.png"></a><br><span xmlns:dct="http://purl.org/dc/terms/" property="dct:title">This document</span>
+    by <span xmlns:cc="http://creativecommons.org/ns#" property="cc:attributionName">Paul
+    Murrell</span> is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by/4.0/">Creative
+    Commons Attribution 4.0 International License</a>.
+  </p>
+    <script>
+  // Use async/await so that PDF files loaded one at a time
+  async function loadPDFs() {
+    var pdfcanvas = document.querySelectorAll("canvas.pdf");
+    var i;
+    for (i=0; i < pdfcanvas.length; i++) {
+        var canvas = pdfcanvas[i];
+        var canvasid = canvas.id;
+        var pdf = await pdfjsLib.getDocument(canvasid + '.pdf');
+        var page = await pdf.getPage(1);
+        var scale = canvas.getAttribute("scale");
+        if (!scale) {
+            scale = 100/72;
+        }
+        var viewport = page.getViewport(scale);
+        var context = canvas.getContext('2d');
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+        var renderContext = {
+            canvasContext: context,
+            viewport: viewport
+        };
+        page.render(renderContext);
+    }
+  }
+  loadPDFs();
+  </script>
+  </body>
+</html>
