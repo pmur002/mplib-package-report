@@ -105,7 +105,7 @@
     </p>
     <p class="date">
     Version 1:
-Sunday 04 November 2018
+Wednesday 07 November 2018
   </p>
 
 
@@ -169,10 +169,10 @@ Sunday 04 November 2018
     features for describing curves.  For example, the 
     following MetaPost code describes an infinity symbol 
     from only four points:  the path will pass horizontally from left
-    to right through the first point (top-left), then the second point
-    (bottom-right), then curve around and pass horizontally
-    from right to left through the third point (top-right), then
-    the fourth point (bottom-left), and finally curve around back to 
+    to right through the first point (bottom-left), then the second point
+    (top-right), then curve around and pass horizontally
+    from right to left through the third point (bottom-right), then
+    the fourth point (top-left), and finally curve around back to 
     the starting point.
   </p>
 <div class="chunk" id="unnamed-chunk-3"><div class="rcode"><div class="output"><pre class="knitr r">  beginfig(1);
@@ -201,7 +201,7 @@ Sunday 04 November 2018
 </div></div>
     <img src="infinity.svg" style="border: solid 1pt; padding: 10pt">
     <p>
-    The MetaPost system is often used in association with the TeX documents.
+    The MetaPost system is often used in association with TeX documents.
     Another approach to using MetaPost is to include MetaPost code directly
     within a LaTeX document, as shown in the following code.  
   </p>
@@ -284,7 +284,8 @@ Sunday 04 November 2018
 </pre></div>
 </div></div>
     <p>
-    ... and can be used to draw the infinity symbol in R.
+    ... and can be used to draw the infinity symbol in R
+    (the <code>grid.metapost</code> function will be described later).
   </p>
 <div class="chunk" id="grid.metaplot"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl kwd">grid.metapost</span><span class="hl std">(p)</span>
 </pre></div>
@@ -416,8 +417,9 @@ Sunday 04 November 2018
 </pre></div>
 </div></div>
     <p>
-This produces a PostScript file <code>"scurve.1"</code>, which we can import and
-draw using 'grImport'.
+    This produces a PostScript file, <code>"scurve.1"</code> in this case, 
+    which we can import and
+    draw using 'grImport'.
   </p>
 <div class="chunk" id="unnamed-chunk-18"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl kwd">library</span><span class="hl std">(grImport)</span>
 </pre></div>
@@ -696,6 +698,12 @@ draw using 'grImport'.
     control points for a path and then use the R package 'vwline'
     (<a href="#pkg:vwline">Murrell, 2018c</a>)
     to draw a variable-width version of that path.
+    The following code defines a MetaPost path and uses
+    <code>metapost</code>, <code>mpost</code>, and 
+    <code>mptrace</code> to generate Bezier control points
+    for the solved path.  We then draw a variable-width Bezier
+    curve based on those control points (with <code>grid.offsetBezier</code>
+    from the 'vwline' package).
   </p>
 <div class="chunk" id="unnamed-chunk-31"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl kwd">library</span><span class="hl std">(grid)</span>
 <span class="hl kwd">library</span><span class="hl std">(vwline)</span>
@@ -713,8 +721,9 @@ draw using 'grImport'.
     <p>
     The recent addition of the 'gridBezier' package 
     (<a href="#pkg:gridbezier">Murrell, 2018b</a>)
-    means that this works for Bezier splines 
-    (consisting of more than one Bezier curve), such as the 
+    means that this also works for Bezier splines, which
+    consist of more than one Bezier curve.  The following code
+    draws a variable-width version of the 
     infinity symbol that we began with.
   </p>
 <div class="chunk" id="unnamed-chunk-33"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl kwd">options</span><span class="hl std">(</span><span class="hl kwc">metapost.units</span><span class="hl std">=</span><span class="hl str">&quot;mm&quot;</span><span class="hl std">)</span>
@@ -734,13 +743,14 @@ draw using 'grImport'.
     As a final example of mixing R graphics and MetaPost graphics,
     the width of a variable-width Bezier spline in 'vwline' can itself be
     described by a Bezier spline.  The following code
-    uses MetaPost to generate Bezier control points for the width
-    of the infinity symbol.  The diagram below the code
-    shows the Bezier spline that we have defined (the left edge
-    of the diagram represents the start of the infinity symbol
-    path and the right edge of the diagram represents the end
-    of the infinity symbol path;  the height of the black line
-    represents the width of the infinity symbol path).
+    uses MetaPost to generate Bezier control points for specifying
+    the width of a variable-width line.
+    The diagram below the code
+    shows the Bezier spline that we have defined.  The left edge
+    of the diagram represents the start of the variable-width line
+    and the right edge of the diagram represents the end
+    of the variable-width line;  the height of the black line
+    represents the width of the variable-width line.
     <!--
     NOTE the use of <code>dir(NA)</code> to place a non-specific
     direction AFTER the second-to-last knot so that the subsequent
@@ -760,7 +770,7 @@ draw using 'grImport'.
 </div></div>
 <div class="chunk" id="unnamed-chunk-35"><div class="rimage default"><img src="figure/unnamed-chunk-35-1.png" title="plot of chunk unnamed-chunk-35" alt="plot of chunk unnamed-chunk-35" class="plot" /></div></div>
     <p>
-    The code below applies that width spline to the infinity symbol.
+    The code below applies that Bezier width spline to the infinity symbol.
   </p>
 <div class="chunk" id="unnamed-chunk-36"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl kwd">options</span><span class="hl std">(</span><span class="hl kwc">metapost.units</span><span class="hl std">=</span><span class="hl str">&quot;mm&quot;</span><span class="hl std">)</span>
 <span class="hl kwd">pushViewport</span><span class="hl std">(</span><span class="hl kwd">viewport</span><span class="hl std">(</span><span class="hl kwc">width</span><span class="hl std">=</span><span class="hl kwd">unit</span><span class="hl std">(</span><span class="hl num">1</span><span class="hl std">,</span> <span class="hl str">&quot;in&quot;</span><span class="hl std">),</span> <span class="hl kwc">height</span><span class="hl std">=</span><span class="hl kwd">unit</span><span class="hl std">(</span><span class="hl num">1</span><span class="hl std">,</span> <span class="hl str">&quot;in&quot;</span><span class="hl std">)))</span>
@@ -797,10 +807,12 @@ draw using 'grImport'.
     the PostScript output using the 'grImport' package.
   </p>
     <p>
-    (The line around the top of the diagram below, from
+    The diagram below attempts to show how these functions all relate
+    to each other
+    (the line around the top of the diagram below, from
     ".ps file" to <code>PostScriptTrace()</code>, was
     described using <code>knot</code> and 
-    drawn using <code>grid.metapost</code>.)
+    drawn using <code>grid.metapost</code>).
   </p>
     <p>
       <img src="diagram.svg">
@@ -859,13 +871,12 @@ endfig;
     <code>mptrace</code> can be used to read information from a 
     MetaPost log file regardless of whether the log file was produced 
     by functions from 'metapost'.
-  </p>
-    <p>
     The functions <code>mptrace</code> and <code>mpsolve</code> 
     are also designed to produce values (Bezier control points)
     that could be used by
     functions other than <code>grid.metapost</code> or
-    <code>grid.mplib</code>.
+    <code>grid.mplib</code> (as demonstrated by the
+    variable-width line examples in the <a href="#integrate">Integrating R and MetaPost graphics</a> Section).
   </p>
     <p>
     Another reason for choosing one MetaPost approach over another is
@@ -881,8 +892,6 @@ endfig;
     remain limits on what is possible with the 'mplib' approach
     because the MetaPost library API only exposes a subset of 
     the MetaPost features.
-  </p>
-    <p>
     The 'grImport' approach, by comparison, will handle any MetaPost
     image, including images that contain text.
   </p>
@@ -950,6 +959,18 @@ endfig;
       <a href="https://hub.docker.com/r/pmur002/mplib-package/">Docker Hub</a>;
       alternatively, the image can be rebuilt from its 
       <a href="Dockerfile">Dockerfile</a>.
+    </li>
+      <li>
+      The 'grImport' package is avaiable from 
+      <a href="http://cran.stat.auckland.ac.nz/web/packages/grImport/index.html">CRAN</a>
+    </li>
+      <li>
+      The 'metapost' package is available on 
+      <a href="https://github.com/pmur002/metapost">github</a>
+    </li>
+      <li>
+      The 'mplib' package is available on 
+      <a href="https://github.com/pmur002/mplib">github</a>
     </li>
     </ul>
     <h2>How to cite this document</h2>
