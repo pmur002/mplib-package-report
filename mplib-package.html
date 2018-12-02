@@ -105,7 +105,7 @@
     </p>
     <p class="date">
     Version 1:
-Wednesday 07 November 2018
+Sunday 02 December 2018
   </p>
 
 
@@ -118,9 +118,12 @@ Wednesday 07 November 2018
     <hr>
     <p>
     This report describes three different approaches to communicating
-    between R and MetaPost: importing the PostScript output from MetaPost;
-    calling the <code>mpost</code> program to solve MetaPost paths;
-    and calling the <code>mplib</code> library to solve MetaPost paths.
+    between R and MetaPost: importing the PostScript output from MetaPost
+    with the 'grImport' package;
+    calling the <code>mpost</code> program to solve MetaPost paths with
+    the 'metapost' package;
+    and calling the <code>mplib</code> library to solve MetaPost paths
+    with the 'mplib' package.
   </p>
     <div>
       <h2>Table of Contents:</h2>
@@ -429,6 +432,13 @@ Wednesday 07 November 2018
 <span class="hl kwd">grid.picture</span><span class="hl std">(scurvePic)</span>
 </pre></div>
 </div><div class="rimage default"><img src="figure/unnamed-chunk-19-1.png" title="plot of chunk unnamed-chunk-19" alt="plot of chunk unnamed-chunk-19" class="plot" /></div></div>
+    <p>
+    Of course, <code>mpost</code> must be installed for this example to work.
+    For example, on Ubuntu:
+  </p>
+    <pre>
+sudo apt-get install texlive-binaries
+  </pre>
     <h2>
       <a name="metapost">4. Tracing MetaPost log output</a>
     </h2>
@@ -507,7 +517,7 @@ Wednesday 07 November 2018
     This should not cause any difficulty if we call
     <code>grid.metapost</code> directly on a MetaPost path,
     because the conversion to MetaPost code and the drawing of
-    the solved path will happen at once, in the same viewport.
+    the solved path will happen at once, in the same viewport context.
   </p>
     <p>
     However, if we call <code>metapost</code> (and <code>mpost</code>
@@ -912,7 +922,9 @@ endfig;
       <a name="requirements">9. Technical requirements</a>
     </h2>
     <p>
-    The examples and discussion in this document relate to 
+    The examples and discussion in this document relate to version 0.9-1
+    of the 
+    <a href="http://cran.stat.auckland.ac.nz/web/packages/grImport/index.html">'grImport'</a> package, 
     <a href="https://github.com/pmur002/metapost/releases/tag/v1.0-0">version
     1.0-0</a> of the 'metapost' package, 
     <a href="https://github.com/pmur002/mplib/releases/tag/v1.0-0">version
@@ -976,7 +988,7 @@ endfig;
     <h2>How to cite this document</h2>
     <p>
     Murrell, P. (2018). "MetaPost Three Ways" 
-    Technical Report 2018-??, Department of Statistics, The University of Auckland. 
+    Technical Report 2018-12, Department of Statistics, The University of Auckland. 
     [ <a href="how-to-cite.bib">bib</a> ] 
   </p>
     <h2>
@@ -1075,7 +1087,7 @@ Murrell, P. (2018b).
 <dd>
 Murrell, P. (2018c).
  <em>vwline: Draw variable-width lines</em>.
- R package version 0.2-0.
+ R package version 0.2-1.
 [ <a href="mplib-package-bib_bib.html#pkg:vwline">bib</a> ]
 
 </dd>
