@@ -39,10 +39,14 @@
     <a href="http://orcid.org"><img alt="" src="https://www.stat.auckland.ac.nz/~paul/ORCID/ORCiD.png" style="width: 16px; height: 16px; vertical-align: middle" /></a> <span style="font-family: mono; font-size: small"><a href="http://orcid.org/0000-0002-3224-8858">http://orcid.org/0000-0002-3224-8858</a></span>
   </p>
   <p class="date">
-    Version 1:
+    Version 2:
     <rcode echo="FALSE" results="asis">
 cat(format(Sys.Date(), "%A %d %B %Y"))
     </rcode>
+  </p>
+  <p class="date versionHistory">
+    Version 1:  Sunday 02 December 2018; original publication<br/>
+    Version 2:  update pdf.js code (for displaying PDFs)
   </p>
 
   <rcode id="init" echo="FALSE" message="FALSE" results="hide">
@@ -809,7 +813,7 @@ endfig;
       contains code for the other transformations and coordinates
       everything.  
       These materials are also available
-      on <a href="https://github.com/pmur002/mplib-package-report/releases/tag/v1">github</a>.
+      on <a href="https://github.com/pmur002/mplib-package-report/releases/tag/v2">github</a>.
     </li>
     <li>
       This report was generated within a 
@@ -888,30 +892,44 @@ endfig;
   </p>
 
   <script><![CDATA[
-  // Use async/await so that PDF files loaded one at a time
-  async function loadPDFs() {
-    var pdfcanvas = document.querySelectorAll("canvas.pdf");
-    var i;
-    for (i=0; i < pdfcanvas.length; i++) {
-        var canvas = pdfcanvas[i];
-        var canvasid = canvas.id;
-        var pdf = await pdfjsLib.getDocument(canvasid + '.pdf');
-        var page = await pdf.getPage(1);
-        var scale = canvas.getAttribute("scale");
-        if (!scale) {
-            scale = 100/72;
-        }
-        var viewport = page.getViewport(scale);
-        var context = canvas.getContext('2d');
-        canvas.height = viewport.height;
-        canvas.width = viewport.width;
-        var renderContext = {
-            canvasContext: context,
-            viewport: viewport
-        };
-        page.render(renderContext);
+  var pdfcanvas = document.querySelectorAll("canvas.pdf");
+
+  function renderPDF(i) {
+    var canvas = pdfcanvas[i];
+    var canvasid = canvas.id;
+    console.log("loop " + canvasid);
+    var loadingTask = pdfjsLib.getDocument(canvasid + '.pdf');
+    loadingTask.promise.then(function(pdf) {
+        pdf.getPage(1).then(function(page) {
+            console.log("pdf" + canvasid);
+            var scale = canvas.getAttribute("scale");
+            if (!scale) {
+                scale = 100/72;
+            }
+            var viewport = page.getViewport({ scale: scale, });
+            var context = canvas.getContext('2d');
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+            var renderContext = {
+                  canvasContext: context,
+                  viewport: viewport
+              };
+            var renderTask = page.render(renderContext);
+            renderTask.promise.then(function() {
+                if (i + 1 < pdfcanvas.length) {
+                    renderPDF(i + 1)
+                }
+            });   
+         });
+    });
+  }
+
+  function loadPDFs() {
+    if (pdfcanvas.length > 0) {
+        renderPDF(0);
     }
   }
+
   loadPDFs();
   ]]>
   </script>
