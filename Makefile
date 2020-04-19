@@ -23,7 +23,7 @@ docker:
 
 web:
 	make docker
-	cp -r ../mplib-package/* ~/Web/Reports/MetaPost/mplib-package/
+	cp -r ../mplib-package-report/* ~/Web/Reports/MetaPost/mplib-package/
 
 zip:
 	make docker
